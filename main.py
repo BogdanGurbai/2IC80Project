@@ -3,6 +3,7 @@ import argparse
 import sys
 from utils import is_root, list_active_interfaces, get_first_active_interface, get_mac_address_of_interface, get_ip_address_of_interface
 from arpPoisoning import ARPSpoofer
+from dnsSpoofing import DNSSpoofer
 
 def main():
     if not is_root():
@@ -26,7 +27,11 @@ def main():
     arp_parser = subparsers.add_parser('arpPoison', help='Poison the ARP cache of a target')
     arp_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
     arp_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim')
-    arp_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
+
+    # DNS Spoof
+    dns_parser = subparsers.add_parser('dnsSpoof', help='Spoof DNS responses')
+    arp_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
+    dns_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
     # -- Parse arguments --
     args = parser.parse_args()
@@ -45,6 +50,12 @@ def main():
             sys.exit("Usage: python main.py arpPoison --ipVictim <ip> --macVictim <mac> --ipToSpoof <ip>")
         arp_spoofer = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipToSpoof)
         arp_spoofer.spoof()
+    elif args.command == 'dnsSpoof':
+        if args.ipVictim is None or args.ipToSpoof is None:
+            sys.exit("Usage: python main.py dnsSpoof --ipVictim <ip> --ipToSpoof <ip>")
+        dns_spoofer = DNSSpoofer(args.interface, args.ipVictim, args.ipToSpoof)  
+        dns_spoofer.spoof()
+        
     elif args.command == 'listInterfaces':
         list_active_interfaces()
 
