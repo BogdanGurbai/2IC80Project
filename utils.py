@@ -1,5 +1,7 @@
 from scapy.interfaces import get_working_ifaces, get_working_if
 from scapy.all import get_if_hwaddr, get_if_addr
+from scapy.all import ARP, Ether, srp
+
 import os
 
 def is_root():
@@ -36,4 +38,18 @@ def get_ip_address_of_interface(interface):
         return get_if_addr(interface)
     except Exception as e:
         print("Could not get IP address for interface {}: {}".format(interface, e))
+        return None
+
+def get_mac_address_from_ip(ip):
+    """Get the MAC address of the device with the specified IP address."""
+    try:
+        packet  = Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=ip)
+        result = srp(packet, timeout=2, verbose=False)[0]
+        if result:
+            return result[0][1].hwsrc
+        else:
+            return None
+
+    except Exception as e:
+        print("Could not get MAC address for IP {}: {}".format(ip, e))
         return None

