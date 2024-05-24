@@ -4,6 +4,7 @@ import sys
 from utils import is_root, list_active_interfaces, get_first_active_interface, get_mac_address_of_interface, get_ip_address_of_interface, get_mac_address_from_ip
 from arpPoisoning import ARPSpoofer
 from dnsSpoofing import DNSSpoofer
+from sslStripping import SSLStripper
 
 def main():
     if not is_root():
@@ -34,6 +35,11 @@ def main():
     dns_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
     dns_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
+    # SSL Strip
+    ssl_parser = subparsers.add_parser('sslStrip', help='Strip SSL from HTTP traffic')
+    ssl_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
+    ssl_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
+
     # -- Parse arguments --
     args = parser.parse_args()
 
@@ -58,6 +64,11 @@ def main():
             sys.exit("Usage: python main.py dnsSpoof --ipVictim <ip> --ipToSpoof <ip>")
         dns_spoofer = DNSSpoofer(args.interface, args.ipVictim, args.ipToSpoof)  
         dns_spoofer.spoof()
+    elif args.command == 'sslStrip':
+        if args.ipVictim is None or args.ipToSpoof is None:
+            sys.exit("Usage: python main.py sslStrip --ipVictim <ip> --ipToSpoof <ip>")
+        ssl_stripper = SSLStripper(args.interface, args.ipVictim, args.ipToSpoof)
+        ssl_stripper.strip()
         
     elif args.command == 'listInterfaces':
         list_active_interfaces()

