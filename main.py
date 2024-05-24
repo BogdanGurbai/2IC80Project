@@ -62,7 +62,7 @@ def main():
     elif args.command == 'dnsSpoof':
         if args.ipVictim is None or args.ipToSpoof is None:
             sys.exit("Usage: python main.py dnsSpoof --ipVictim <ip> --ipToSpoof <ip>")
-        dns_spoofer = DNSSpoofer(args.interface, args.ipVictim, args.ipToSpoof)  
+        dns_spoofer = DNSSpoofer(args.interface, args.ipAttacker, args.ipVictim, args.ipToSpoof)  
         dns_spoofer.spoof()
     elif args.command == 'sslStrip':
         if args.ipVictim is None or args.ipToSpoof is None:

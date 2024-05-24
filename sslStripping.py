@@ -12,7 +12,7 @@ class SSLStripper:
     def strip(self):
         log_info("Starting SSL stripping")
         sniff(
-            filter="tcp and port 80",
+            filter="tcp and port 443",
             prn=self._on_https_request,
             iface=self.interface,
             count=0,
