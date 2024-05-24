@@ -27,10 +27,11 @@ def main():
     arp_parser = subparsers.add_parser('arpPoison', help='Poison the ARP cache of a target')
     arp_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
     arp_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim')
+    arp_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
     # DNS Spoof
     dns_parser = subparsers.add_parser('dnsSpoof', help='Spoof DNS responses')
-    arp_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
+    dns_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
     dns_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
     # -- Parse arguments --

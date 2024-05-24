@@ -1,4 +1,5 @@
-from scapy.all import get_working_ifaces, get_working_if, get_if_hwaddr, get_if_addr
+from scapy.interfaces import get_working_ifaces, get_working_if
+from scapy.all import get_if_hwaddr, get_if_addr
 import os
 
 def is_root():
@@ -15,7 +16,7 @@ def list_active_interfaces():
     for interface in interfaces:
         mac_addr = get_mac_address_of_interface(interface)
         ip_addr = get_ip_address_of_interface(interface)
-        print("Interface: {interface.name}\nMAC Address: {mac_addr}\nIP Address: {ip_addr}\n".format(interface.name, mac_addr, ip_addr))
+        print("Interface: {}\nMAC Address: {}\nIP Address: {}\n".format(interface.name, mac_addr, ip_addr))
 
 def get_first_active_interface():
     """Get the first active network interface on the system."""
@@ -26,7 +27,7 @@ def get_mac_address_of_interface(interface):
     try:
         return get_if_hwaddr(interface)
     except Exception as e:
-        print("Could not get MAC address for interface {interface}: {e}".format(interface, e))
+        print("Could not get MAC address for interface {}: {}".format(interface, e))
         return None
 
 def get_ip_address_of_interface(interface):
@@ -34,5 +35,5 @@ def get_ip_address_of_interface(interface):
     try:
         return get_if_addr(interface)
     except Exception as e:
-        print("Could not get IP address for interface {interface}: {e}".format(interface, e))
+        print("Could not get IP address for interface {}: {}".format(interface, e))
         return None
