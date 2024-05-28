@@ -5,6 +5,7 @@ from utils import is_root, list_active_interfaces, get_first_active_interface, g
 from arpPoisoning import ARPSpoofer
 from dnsSpoofing import DNSSpoofer
 from sslStripping import SSLStripper
+from forwarder import Forwarder
 
 def main():
     if not is_root():
@@ -40,6 +41,11 @@ def main():
     ssl_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
     ssl_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
+    # Forward packages
+    forward_parser = subparsers.add_parser('forward', help='Forward packages between two hosts')
+    forward_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
+    forward_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
+
     # -- Parse arguments --
     args = parser.parse_args()
 
@@ -69,6 +75,11 @@ def main():
             sys.exit("Usage: python main.py sslStrip --ipVictim <ip> --ipToSpoof <ip>")
         ssl_stripper = SSLStripper(args.interface, args.ipAttacker, args.ipVictim, args.ipToSpoof)
         ssl_stripper.strip()
+    elif args.command == 'forward':
+        if args.ipVictim is None or args.ipToSpoof is None:
+            sys.exit("Usage: python main.py forward --ipVictim <ip> --ipToSpoof <ip>")
+        forwarder = Forwarder(args.interface, args.ipAttacker, args.ipVictim, args.ipToSpoof)
+        forwarder.strip()
         
     elif args.command == 'listInterfaces':
         list_active_interfaces()
