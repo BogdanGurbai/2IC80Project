@@ -22,10 +22,9 @@ class Forwarder:
 
     def _on_packet_to_server(self, packet):
         if not packet.haslayer(Raw):
-            log_info("Ignoring packet without Raw layer")
+            log_warning("Ignoring packet without Raw layer")
             return
         
-        # TODO: move these checks into sniff filter (also for DNS)
         from_victim = (packet[IP].src == self.ip_victim and packet[IP].dst == self.ip_attacker)
         from_server = (packet[IP].src == self.ip_to_spoof and packet[IP].dst == self.ip_attacker)
 

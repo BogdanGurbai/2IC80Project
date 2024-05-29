@@ -4,11 +4,10 @@ from logger import log_info, log_warning
 from scapy.layers.http import HTTPRequest, TCP, Raw
 
 class SSLStripper:
-    def __init__(self, interface, ip_victim, ip_attacker, ip_to_spoof):
+    def __init__(self, interface, ip_victim, ip_attacker):
         self.interface = interface
         self.ip_victim = ip_victim
         self.ip_attacker = ip_attacker
-        self.ip_to_spoof = ip_to_spoof
 
     def strip(self):
         log_info("Starting SSL stripping")
@@ -43,4 +42,4 @@ class SSLStripper:
             send(response, verbose=0)
             log_info("Sent HTTP response for {} to {}".format(packet[IP].src, packet[IP].dst))
         else:
-            log_info("Ignoring packet from {}".format(packet[IP].src))
+            log_warning("Ignoring packet from {}".format(packet[IP].src))
