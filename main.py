@@ -39,6 +39,7 @@ def main():
     # SSL Strip
     ssl_parser = subparsers.add_parser('sslStrip', help='Strip SSL from HTTP traffic')
     ssl_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
+    ssl_parser.add_argument('--siteToSpoof', type=str, help='The website to spoof')
 
     # Forward packages
     forward_parser = subparsers.add_parser('forward', help='Forward packages between two hosts')
@@ -70,9 +71,9 @@ def main():
         dns_spoofer = DNSSpoofer(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof)  
         dns_spoofer.spoof()
     elif args.command == 'sslStrip':
-        if args.ipVictim is None or args.ipToSpoof is None:
-            sys.exit("Usage: python main.py sslStrip --ipVictim <ip>")
-        ssl_stripper = SSLStripper(args.interface, args.ipAttacker, args.ipVictim)
+        if args.ipVictim is None or args.siteToSpoof is None:
+            sys.exit("Usage: python main.py sslStrip --ipVictim <ip> --siteToSpoof <url>")
+        ssl_stripper = SSLStripper(args.interface, args.ipVictim, args.ipAttacker, args.siteToSpoof)
         ssl_stripper.strip()
     elif args.command == 'forward':
         if args.ipVictim is None or args.ipToSpoof is None:
