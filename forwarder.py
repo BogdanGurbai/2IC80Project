@@ -27,7 +27,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print("Headers:", self.headers)
 
             # Use requests to forward this request to site_to_spoof
-            response = requests.get("https://" + site_to_spoof + self.path)
+            response = requests.get("https://" + site_to_spoof + self.path, headers=self.headers, )
             
             # Send the response back to the client
             self.send_response(response.status_code)
