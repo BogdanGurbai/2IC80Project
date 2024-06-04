@@ -69,7 +69,7 @@ def main():
     # -- Execute the command --
     if args.command == 'arpPoison':
         if args.macVictim is None and args.ipVictim is not None:
-            args.macVictim = get_mac_address_from_ip(args.ipVictim)
+            args.macVictim = get_mac_address_from_ip(args.ipVictim, args.interface)
         elif args.ipVictim is None or args.macVictim is None or args.ipToSpoof is None:
             sys.exit("Usage: python main.py arpPoison --ipVictim <ip> --macVictim <mac> --ipToSpoof <ip>")
         arp_spoofer = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipToSpoof)
@@ -91,7 +91,7 @@ def main():
         forwarder.forward()
     elif args.command == 'fullAttack':
         if args.macVictim is None and args.ipVictim is not None:
-            args.macVictim = get_mac_address_from_ip(args.ipVictim)
+            args.macVictim = get_mac_address_from_ip(args.ipVictim, args.interface)
         if args.ipVictim is None or args.ipGateway is None or args.siteToSpoof is None:
             sys.exit("Usage: python main.py fullAttack --ipVictim <ip> --macVictim <mac> --ipGateway <ip> --siteToSpoof <url>")
         arp_spoofer_victim = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipGateway)

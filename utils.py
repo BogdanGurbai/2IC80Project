@@ -40,11 +40,11 @@ def get_ip_address_of_interface(interface):
         print("Could not get IP address for interface {}: {}".format(interface, e))
         return None
 
-def get_mac_address_from_ip(ip):
+def get_mac_address_from_ip(ip, interface):
     """Get the MAC address of the device with the specified IP address."""
     try:
         packet  = Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=ip)
-        result = srp(packet, timeout=2, verbose=False)[0]
+        result = srp(packet, iface=interface, timeout=2, verbose=False)[0]
         if result:
             return result[0][1].hwsrc
         else:
