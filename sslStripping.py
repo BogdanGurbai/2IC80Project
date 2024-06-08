@@ -69,6 +69,11 @@ class SSLStripper:
         elif packet.haslayer(TCP) and len(packet[TCP].payload) > 0:
             log_info("Received HTTPS request for {} from {}".format(packet[IP].dst,packet[IP].src))
 
+            # TODO: For some reason this 301 is not correctly interpreted by the client.
+            # TODO: The client does not redirect to the http site. It instead shows an error: "ssl_error_rx_record_too_long"
+            # TODO: Some sources suggest that his redirect message should be sent over port 80 instead of 443. but that does not work either.
+            # NOTE: Everything looks fine in Wireshark, but the client does not redirect.
+
             # Construct the HTTP 301 Moved Permanently response
             response = (IP(dst=packet[IP].src, src=packet[IP].dst) /
                         TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="PA",
