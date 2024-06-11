@@ -1,7 +1,7 @@
 from scapy.all import *
 from scapy.layers.inet import IP
 from logger import log_info, log_warning
-from scapy.layers.http import HTTPRequest, TCP, Raw
+from scapy.layers.http import TCP, Raw
 import atexit
 
 class SSLStripper:
