@@ -29,7 +29,7 @@ def main():
     # ARP Poison
     arp_parser = subparsers.add_parser('arpPoison', help='Poison the ARP cache of a target')
     arp_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
-    arp_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim')
+    arp_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim, default is the MAC address of the victim obtained from the IP address using ARP')
     arp_parser.add_argument('--ipToSpoof', type=str, help='The IP address to spoof')
 
     # DNS Spoof
@@ -52,7 +52,7 @@ def main():
     # Full attack
     full_attack_parser = subparsers.add_parser('fullAttack', help='Perform a full attack')
     full_attack_parser.add_argument('--ipVictim', type=str, help='The IP address of the victim')
-    full_attack_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim')
+    full_attack_parser.add_argument('--macVictim', type=str, help='The MAC address of the victim, default is the MAC address of the victim obtained from the IP address using ARP')
     full_attack_parser.add_argument('--ipGateway', type=str, help='The IP address of the gateway')
     full_attack_parser.add_argument('--siteToSpoof', type=str, help='The website to spoof')
     full_attack_parser.add_argument('--get_file', type=str, help='The file to save GET requests to')

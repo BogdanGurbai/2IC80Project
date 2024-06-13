@@ -57,6 +57,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if get_file is not None:
                     with open(get_file, 'a') as f:
                         f.write(decoded)
+                        f.write("\n\n\n")
             except UnicodeDecodeError:
                 response_content = response.content.replace(b"https://", b"http://")
 
@@ -93,6 +94,11 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Read the POST data
             post_data = self.rfile.read(content_length)
+            # Save the post data to a file
+            if post_file is not None:
+                with open(post_file, 'a') as f:
+                    f.write(post_data.decode('utf-8'))
+                    f.write("\n\n\n")
 
             log_info("Request Path: "+ self.path)
             log_info("Request Headers: " + str(new_headers))
@@ -108,6 +114,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if post_file is not None:
                     with open(post_file, 'a') as f:
                         f.write(decoded)
+                        f.write("\n\n\n")
             except UnicodeDecodeError:
                 response_content = response.content.replace(b"https://", b"http://")
 
