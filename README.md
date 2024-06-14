@@ -1,6 +1,8 @@
 # 2IC80Project
 Lab on Offensive Computer Security
 "
+# Video link of the demo
+https://www.youtube.com/watch?v=uOcwnNOZDNY&ab_channel=Ruud
 ### Addresses:
 Attacker:
 10.0.123.4  08:00:27:4f:6a:5d
